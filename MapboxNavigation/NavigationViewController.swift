@@ -499,6 +499,9 @@ extension NavigationViewController: NavigationServiceDelegate {
         for component in navigationComponents {
             component.navigationService(service, didUpdate: progress, with: location, rawLocation: rawLocation)
         }
+        
+        
+        self.mapView?.fadeRouteLine(percentComplete: progress.fractionTraveled * 1.0)
 
         // If the user has arrived, don't snap the user puck.
         // In the case the user drives beyond the waypoint,

@@ -690,6 +690,45 @@ open class NavigationMapView: MGLMapView, UIGestureRecognizerDelegate {
         ].compactMap { style.source(withIdentifier: $0) }))
     }
     
+    /**
+     Removes completed sections of the route line.
+     */
+    
+    public func fadeRouteLine(percentComplete: Double) {
+        guard let style = self.style else { return }
+        
+        /**
+         This is necessary to prevent duplicate keys in the dictionary
+         defining the gradient. It's not for aesthetic purposes.
+         */
+        let gradientToTransparent: Double = 0.0005
+
+        var stops: [Double: UIColor] = [
+            0: self.trafficUnknownColor.withAlphaComponent(1),
+            1: self.trafficUnknownColor.withAlphaComponent(1)
+        ]
+
+        var casingStops: [Double: UIColor] = [
+            0: routeCasingColor.withAlphaComponent(1),
+            1: routeCasingColor.withAlphaComponent(1)
+        ]
+
+        if percentComplete > 0 && percentComplete + gradientToTransparent < 1 {
+            stops[0] = trafficUnknownColor.withAlphaComponent(0)
+            casingStops [0] = routeCasingColor.withAlphaComponent(0)
+            stops[percentComplete] = trafficUnknownColor.withAlphaComponent(0)
+            stops[percentComplete + gradientToTransparent] = trafficUnknownColor.withAlphaComponent(1)
+            casingStops[percentComplete] = routeCasingColor.withAlphaComponent(0)
+            casingStops[percentComplete + gradientToTransparent] = routeCasingColor.withAlphaComponent(1)
+        }
+
+        if let routeLine = style.layer(withIdentifier: StyleLayerIdentifier.route) as? MGLLineStyleLayer,
+           let routeLineCasing = style.layer(withIdentifier: StyleLayerIdentifier.routeCasing) as? MGLLineStyleLayer {
+            routeLine.lineGradient = NSExpression(format: "mgl_interpolate:withCurveType:parameters:stops:($lineProgress, 'linear', nil, %@)", stops)
+            routeLineCasing.lineGradient = NSExpression(format: "mgl_interpolate:withCurveType:parameters:stops:($lineProgress, 'linear', nil, %@)", casingStops)
+        }
+    }
+    
     // MARK: Utility Methods
     
     /** Modifies the gesture recognizers to also disable course tracking. */
